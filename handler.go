@@ -1,4 +1,4 @@
-package yamldumphandler
+package yadu
 
 import (
 	"bytes"
@@ -15,9 +15,13 @@ import (
 	"github.com/fatih/color"
 )
 
-const defaultTimeFormat = "2006-01-02T03:04.05 MST"
+// We use RFC datestring by default
+const DefaultTimeFormat = "2006-01-02T03:04.05 MST"
 
-type YamlDumpHandler struct {
+// Default log level is INFO:
+const defaultLevel = slog.LevelInfo
+
+type Handler struct {
 	writer      io.Writer
 	mu          *sync.Mutex
 	level       slog.Leveler
@@ -29,14 +33,25 @@ type YamlDumpHandler struct {
 	indenter    *regexp.Regexp
 }
 
-type YamlDumpHandlerOptions struct {
+// Options are options for the Yadu [log/slog.Handler].
+//
+// Level sets the minimum log level.
+//
+// ReplaceAttr is a function you  can define to customize how supplied
+// attrs are being handled. It is empty by default, so nothing will be
+// altered.
+//
+// Loglevel and message cannot be altered using ReplaceAttr. Timestamp
+// can only be removed, see example. Keep in mind that everything will
+// be passed to yaml.Marshal() in the end.
+type Options struct {
 	Level       slog.Leveler
 	ReplaceAttr func(groups []string, a slog.Attr) slog.Attr
 	TimeFormat  string
 	AddSource   bool
 }
 
-func (h *YamlDumpHandler) Handle(ctx context.Context, r slog.Record) error {
+func (h *Handler) Handle(ctx context.Context, r slog.Record) error {
 	level := r.Level.String() + ":"
 
 	switch r.Level {
@@ -97,21 +112,21 @@ func (h *YamlDumpHandler) Handle(ctx context.Context, r slog.Record) error {
 	defer h.mu.Unlock()
 	_, err := h.writer.Write(buf.Bytes())
 
-	//	h.l.Println(timeStr, level, msg, color.WhiteString(tree))
-
 	return err
 }
 
-func (h *YamlDumpHandler) Postprocess(yamlstr []byte) string {
+func (h *Handler) Postprocess(yamlstr []byte) string {
 	return "\n    " + strings.TrimSpace(h.indenter.ReplaceAllString(string(yamlstr), "    "))
 }
 
-func NewYamlDumpHandler(out io.Writer, opts *YamlDumpHandlerOptions) *YamlDumpHandler {
+// NewHandler returns a [log/slog.Handler] using the receiver's options.
+// Default options are used if opts is nil.
+func NewHandler(out io.Writer, opts *Options) *Handler {
 	if opts == nil {
-		opts = &YamlDumpHandlerOptions{}
+		opts = &Options{}
 	}
 
-	h := &YamlDumpHandler{
+	h := &Handler{
 		writer:      out,
 		mu:          &sync.Mutex{},
 		level:       opts.Level,
@@ -121,20 +136,24 @@ func NewYamlDumpHandler(out io.Writer, opts *YamlDumpHandlerOptions) *YamlDumpHa
 		indenter:    regexp.MustCompile(`(?m)^`),
 	}
 
+	if opts.Level == nil {
+		h.level = defaultLevel
+	}
+
 	if h.timeFormat == "" {
-		h.timeFormat = defaultTimeFormat
+		h.timeFormat = DefaultTimeFormat
 	}
 
 	return h
 }
 
 // Enabled indicates whether the receiver logs at the given level.
-func (h *YamlDumpHandler) Enabled(_ context.Context, l slog.Level) bool {
+func (h *Handler) Enabled(_ context.Context, l slog.Level) bool {
 	return l >= h.level.Level()
 }
 
 // attributes plus attrs.
-func (h *YamlDumpHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+func (h *Handler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	if len(attrs) == 0 {
 		return h
 	}
@@ -157,7 +176,7 @@ func (h *YamlDumpHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 
 // WithGroup returns a new [log/slog.Handler] with name appended to the
 // receiver's groups.
-func (h *YamlDumpHandler) WithGroup(name string) slog.Handler {
+func (h *Handler) WithGroup(name string) slog.Handler {
 	if name == "" {
 		return h
 	}
@@ -166,8 +185,8 @@ func (h *YamlDumpHandler) WithGroup(name string) slog.Handler {
 	return h2
 }
 
-func (h *YamlDumpHandler) clone() *YamlDumpHandler {
-	return &YamlDumpHandler{
+func (h *Handler) clone() *Handler {
+	return &Handler{
 		writer:      h.writer,
 		mu:          h.mu,
 		level:       h.level,

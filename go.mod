@@ -1,4 +1,4 @@
-module github.com/tlinden/yamldumphandler
+module github.com/tlinden/yadu
 
 go 1.21
 
