@@ -1,10 +1,9 @@
-package main
+package yamldumphandler
 
 import (
 	"bytes"
 	"context"
 	"io"
-	"log"
 	"log/slog"
 	"regexp"
 	"slices"
@@ -19,7 +18,6 @@ import (
 const defaultTimeFormat = "2006-01-02T03:04.05 MST"
 
 type YamlDumpHandler struct {
-	l           *log.Logger
 	writer      io.Writer
 	mu          *sync.Mutex
 	level       slog.Leveler
