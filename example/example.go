@@ -33,8 +33,8 @@ func removeTime(_ []string, a slog.Attr) slog.Attr {
 
 func main() {
 	opts := &yadu.Options{
-		Level: slog.LevelDebug,
-		//ReplaceAttr: removeTime,
+		Level:       slog.LevelDebug,
+		ReplaceAttr: removeTime,
 	}
 
 	logger := slog.New(yadu.NewHandler(os.Stdout, opts))
