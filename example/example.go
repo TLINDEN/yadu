@@ -3,6 +3,8 @@ package main
 import (
 	"log/slog"
 	"os"
+
+	"github.com/tlinden/yadu"
 )
 
 type body string
@@ -30,12 +32,12 @@ func removeTime(_ []string, a slog.Attr) slog.Attr {
 }
 
 func main() {
-	opts := &YamlDumpHandlerOptions{
+	opts := &yadu.Options{
 		Level: slog.LevelDebug,
 		//ReplaceAttr: removeTime,
 	}
 
-	logger := slog.New(NewYamlDumpHandler(os.Stdout, opts))
+	logger := slog.New(yadu.NewHandler(os.Stdout, opts))
 
 	slog.SetDefault(logger)
 
