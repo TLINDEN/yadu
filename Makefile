@@ -12,7 +12,7 @@ buildlocal:
 	go build
 
 clean:
-	rm -rf $(tool) coverage.out testdata t/out
+	rm -rf $(tool) coverage.out testdata t/out example/example
 
 test: clean
 	go test $(ARGS)
