@@ -15,18 +15,23 @@ import (
 	"github.com/fatih/color"
 )
 
+const VERSION = "0.1.0"
+
 // We use RFC datestring by default
 const DefaultTimeFormat = "2006-01-02T03:04.05 MST"
 
 // Default log level is INFO:
 const defaultLevel = slog.LevelInfo
 
+// holds attributes added with logger.With()
+type attributes map[string]interface{}
+
 type Handler struct {
 	writer      io.Writer
 	mu          *sync.Mutex
 	level       slog.Leveler
 	groups      []string
-	attrs       string
+	attrs       attributes
 	timeFormat  string
 	replaceAttr func(groups []string, a slog.Attr) slog.Attr
 	addSource   bool
@@ -49,6 +54,7 @@ type Options struct {
 	ReplaceAttr func(groups []string, a slog.Attr) slog.Attr
 	TimeFormat  string
 	AddSource   bool
+	NoColor     bool
 }
 
 func (h *Handler) Handle(ctx context.Context, r slog.Record) error {
@@ -71,7 +77,15 @@ func (h *Handler) Handle(ctx context.Context, r slog.Record) error {
 		return true
 	})
 
-	tree := h.attrs
+	tree := ""
+
+	if len(h.attrs) > 0 {
+		bytetree, err := yaml.Marshal(h.attrs)
+		if err != nil {
+			return err
+		}
+		tree = h.Postprocess(bytetree)
+	}
 
 	if len(fields) > 0 {
 		bytetree, err := yaml.Marshal(&fields)
@@ -79,7 +93,7 @@ func (h *Handler) Handle(ctx context.Context, r slog.Record) error {
 			return err
 		}
 
-		tree = h.Postprocess(bytetree)
+		tree += h.Postprocess(bytetree)
 	}
 
 	timeStr := ""
@@ -144,6 +158,10 @@ func NewHandler(out io.Writer, opts *Options) *Handler {
 		h.timeFormat = DefaultTimeFormat
 	}
 
+	if opts.NoColor {
+		color.NoColor = true
+	}
+
 	return h
 }
 
@@ -153,24 +171,59 @@ func (h *Handler) Enabled(_ context.Context, l slog.Level) bool {
 }
 
 // attributes plus attrs.
+func (h *Handler) appendAttr(wa map[string]interface{}, a slog.Attr) {
+	a.Value = a.Value.Resolve()
+
+	if a.Value.Kind() == slog.KindGroup {
+		attrs := a.Value.Group()
+		name := ""
+		if len(attrs) == 0 {
+			return
+		}
+
+		if a.Key != "" {
+			name = a.Key
+			h.groups = append(h.groups, a.Key)
+		}
+
+		innerwa := make(map[string]interface{})
+		for _, a := range attrs {
+			h.appendAttr(innerwa, a)
+		}
+		wa[name] = innerwa
+
+		if a.Key != "" {
+			h.groups = h.groups[:len(h.groups)-1]
+		}
+
+		return
+	}
+
+	if h.replaceAttr != nil {
+		a = h.replaceAttr(h.groups, a)
+	}
+
+	if !a.Equal(slog.Attr{}) {
+		wa[a.Key] = a.Value.Any()
+	}
+}
+
+// sub logger is to be created, possibly with attrs, add them to h.attrs
 func (h *Handler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	if len(attrs) == 0 {
 		return h
 	}
 
-	fields := make(map[string]interface{}, len(attrs))
-	for _, a := range attrs {
-		fields[a.Key] = a.Value.Any()
-	}
-
-	bytetree, err := yaml.Marshal(&fields)
-	if err != nil {
-		panic(err)
-	}
-
 	h2 := h.clone()
 
-	h2.attrs += string(bytetree)
+	wa := make(map[string]interface{})
+
+	for _, a := range attrs {
+		h2.appendAttr(wa, a)
+	}
+
+	h2.attrs = wa
+
 	return h2
 }
 

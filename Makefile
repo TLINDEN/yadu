@@ -6,6 +6,8 @@
 #
 # no need to modify anything below
 
+VERSION   = $(shell grep VERSION handler.go | head -1 | cut -d '"' -f2)
+
 all: buildlocal
 
 buildlocal:
@@ -30,3 +32,6 @@ goupdate:
 
 lint:
 	golangci-lint run -p bugs -p unused
+
+release: buildlocal test
+	@echo gh release create v$(VERSION) --generate-notes releases/*
