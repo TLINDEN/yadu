@@ -2,6 +2,7 @@
 [![Actions](https://github.com/tlinden/yadu/actions/workflows/ci.yaml/badge.svg)](https://github.com/tlinden/yadu/actions)
 [![Go Coverage](https://github.com/tlinden/yadu/wiki/coverage.svg)](https://raw.githack.com/wiki/tlinden/yadu/coverage.html)
 ![GitHub License](https://img.shields.io/github/license/tlinden/yadu)
+[![GoDoc](https://godoc.org/github.com/tlinden/yadu?status.svg)](https://godoc.org/github.com/tlinden/yadu)
 
 # yadu - a human readable yaml based slog.Handler
 
