@@ -34,5 +34,5 @@ lint:
 	golangci-lint run -p bugs -p unused
 
 release: buildlocal test
-	gh release create v$(VERSION) --generate-notes releases/*
+	gh release create v$(VERSION) --generate-notes
 
