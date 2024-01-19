@@ -195,5 +195,6 @@ func (h *Handler) clone() *Handler {
 		timeFormat:  h.timeFormat,
 		replaceAttr: h.replaceAttr,
 		addSource:   h.addSource,
+		indenter:    h.indenter,
 	}
 }
