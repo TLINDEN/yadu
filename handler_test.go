@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/tlinden/yadu"
 )
 
@@ -28,10 +29,12 @@ type Enemy struct {
 }
 
 type Tests struct {
-	name   string
-	want   string
-	negate bool
-	opts   *yadu.Options
+	name    string
+	want    string
+	negate  bool
+	opts    yadu.Options
+	with    slog.Attr
+	haswith bool
 }
 
 const testTimeFormat = "03:04.05"
@@ -65,7 +68,7 @@ var tests = []Tests{
 	{
 		name: "has-no-time",
 		want: time.Now().Format(yadu.DefaultTimeFormat),
-		opts: &yadu.Options{
+		opts: yadu.Options{
 			ReplaceAttr: removeTime,
 		},
 		negate: true,
@@ -73,12 +76,60 @@ var tests = []Tests{
 	{
 		name: "has-custom-time",
 		want: time.Now().Format(testTimeFormat),
-		opts: &yadu.Options{
+		opts: yadu.Options{
 			TimeFormat: testTimeFormat,
 		},
 		negate: false,
 	},
-	// FIXME: add WithGroup + WithAttr tests
+	{
+		name:   "with-group",
+		want:   "pid:",
+		negate: false,
+		with: slog.Group("program_info",
+			slog.Int("pid", 1923),
+			slog.Bool("alive", true),
+		),
+		haswith: true,
+	},
+	{
+		name:   "has-debug",
+		want:   "DEBUG",
+		negate: false,
+		opts: yadu.Options{
+			Level: slog.LevelDebug,
+		},
+	},
+	{
+		name:   "has-warn",
+		want:   "WARN",
+		negate: false,
+		opts: yadu.Options{
+			Level: slog.LevelWarn,
+		},
+	},
+	{
+		name:   "has-error",
+		want:   "ERROR",
+		negate: false,
+		opts: yadu.Options{
+			Level: slog.LevelError,
+		},
+	},
+	{
+		// check if output is NOT colored when disabling it
+		name:   "disable-color",
+		want:   "\x1b[0m",
+		negate: true,
+		opts: yadu.Options{
+			NoColor: true,
+		},
+	},
+	{
+		// check if output is colored
+		name:   "enable-color",
+		want:   "\x1b[0m",
+		negate: false,
+	},
 }
 
 func GetEnemy() *Enemy {
@@ -101,9 +152,29 @@ func Test(t *testing.T) {
 	for _, tt := range tests {
 		var buf bytes.Buffer
 
-		logger := slog.New(yadu.NewHandler(&buf, tt.opts))
+		logger := slog.New(yadu.NewHandler(&buf, &tt.opts))
 
-		logger.Info("attack", "enemy", GetEnemy())
+		if !tt.with.Equal(slog.Attr{}) {
+			logger = logger.With(tt.with)
+		}
+
+		if !tt.opts.NoColor {
+			color.NoColor = false
+		}
+
+		slog.SetDefault(logger)
+
+		switch tt.opts.Level {
+		case slog.LevelDebug:
+			logger.Debug("attack", "enemy", GetEnemy())
+		case slog.LevelWarn:
+			logger.Warn("attack", "enemy", GetEnemy())
+		case slog.LevelError:
+			logger.Error("attack", "enemy", GetEnemy())
+		default:
+			logger.Info("attack", "enemy", GetEnemy())
+		}
+
 		got := buf.String()
 
 		if strings.Contains(got, tt.want) == tt.negate {
