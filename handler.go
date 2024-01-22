@@ -75,7 +75,11 @@ func (h *Handler) Handle(ctx context.Context, r slog.Record) error {
 
 	fields := make(map[string]interface{}, r.NumAttrs())
 	r.Attrs(func(a slog.Attr) bool {
-		fields[a.Key] = a.Value.Any()
+		//fields[a.Key] = a.Value.Any()
+		a.Value = a.Value.Resolve()
+		wa := make(map[string]interface{})
+		h.appendAttr(wa, a)
+		fields[a.Key] = wa[a.Key]
 		return true
 	})
 

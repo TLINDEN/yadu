@@ -20,6 +20,12 @@ type Ammo struct {
 	Range     float32
 }
 
+func (a *Ammo) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("Forweapon", "Use weapon: "+a.Forweapon),
+	)
+}
+
 type Enemy struct {
 	Alive  bool
 	Health int
@@ -49,6 +55,16 @@ var tests = []Tests{
 		name:   "has-ammo",
 		want:   "ammo:",
 		negate: false,
+	},
+	{
+		name:   "has-ammo-logvaluer",
+		want:   "Use weapon: Axe",
+		negate: false,
+	},
+	{
+		name:   "has-ammo-logvaluer-does-resolve",
+		want:   "impact: 50", // should NOT appear
+		negate: true,
 	},
 	{
 		name:   "has-alive",
@@ -144,7 +160,10 @@ func GetEnemy() *Enemy {
 	return &Enemy{Alive: true, Health: 10, Name: "Bodo", Body: "body\nbody\n",
 		Ammo: []Ammo{{Forweapon: "Railgun", Range: 400, Impact: 100, Cost: 100000}},
 	}
+}
 
+func GetAmmo() *Ammo {
+	return &Ammo{Forweapon: "Axe", Range: 50, Impact: 1, Cost: 50}
 }
 
 func removeTime(_ []string, a slog.Attr) slog.Attr {
@@ -174,13 +193,13 @@ func Test(t *testing.T) {
 
 		switch tt.opts.Level {
 		case slog.LevelDebug:
-			logger.Debug("attack", "enemy", GetEnemy())
+			logger.Debug("attack", "enemy", GetEnemy(), "ammo", GetAmmo())
 		case slog.LevelWarn:
-			logger.Warn("attack", "enemy", GetEnemy())
+			logger.Warn("attack", "enemy", GetEnemy(), "ammo", GetAmmo())
 		case slog.LevelError:
-			logger.Error("attack", "enemy", GetEnemy())
+			logger.Error("attack", "enemy", GetEnemy(), "ammo", GetAmmo())
 		default:
-			logger.Info("attack", "enemy", GetEnemy())
+			logger.Info("attack", "enemy", GetEnemy(), "ammo", GetAmmo())
 		}
 
 		got := buf.String()
