@@ -35,6 +35,7 @@ func main() {
 	opts := &yadu.Options{
 		Level:       slog.LevelDebug,
 		ReplaceAttr: removeTime,
+		AddSource:   true,
 	}
 
 	logger := slog.New(yadu.NewHandler(os.Stdout, opts))
