@@ -16,12 +16,24 @@ type Ammo struct {
 	Range     int
 }
 
+func (a *Ammo) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("Forweapon", a.Forweapon),
+	)
+}
+
 type Enemy struct {
 	Alive  bool
 	Health int
 	Name   string
 	Body   body `yaml:"-"`
 	Ammo   []Ammo
+}
+
+func (e *Enemy) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("name", e.Name),
+	)
 }
 
 func removeTime(_ []string, a slog.Attr) slog.Attr {
@@ -47,6 +59,7 @@ func main() {
 	}
 
 	slog.Info("info", "enemy", e, "spawn", 199)
+	slog.Info("info", "ammo", &Ammo{Forweapon: "axe", Impact: 1})
 	slog.Info("connecting", "enemies", 100, "players", 2, "world", "600x800")
 	slog.Debug("debug text")
 	slog.Error("error")
