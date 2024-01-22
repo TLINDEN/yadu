@@ -3,9 +3,11 @@ package yadu
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"log/slog"
 	"regexp"
+	"runtime"
 	"slices"
 	"strings"
 	"sync"
@@ -15,7 +17,7 @@ import (
 	"github.com/fatih/color"
 )
 
-const VERSION = "0.1.0"
+const VERSION = "0.1.1"
 
 // We use RFC datestring by default
 const DefaultTimeFormat = "2006-01-02T03:04.05 MST"
@@ -78,6 +80,11 @@ func (h *Handler) Handle(ctx context.Context, r slog.Record) error {
 	})
 
 	tree := ""
+	source := ""
+
+	if h.addSource && r.PC != 0 {
+		source = h.getSource(r.PC)
+	}
 
 	if len(h.attrs) > 0 {
 		bytetree, err := yaml.Marshal(h.attrs)
@@ -119,6 +126,8 @@ func (h *Handler) Handle(ctx context.Context, r slog.Record) error {
 	buf.WriteString(" ")
 	buf.WriteString(msg)
 	buf.WriteString(" ")
+	buf.WriteString(source)
+	buf.WriteString(" ")
 	buf.WriteString(color.WhiteString(tree))
 	buf.WriteString("\n")
 
@@ -127,6 +136,13 @@ func (h *Handler) Handle(ctx context.Context, r slog.Record) error {
 	_, err := h.writer.Write(buf.Bytes())
 
 	return err
+}
+
+// report caller source+line as yaml string
+func (h *Handler) getSource(pc uintptr) string {
+	fs := runtime.CallersFrames([]uintptr{pc})
+	source, _ := fs.Next()
+	return fmt.Sprintf("%s: %d", source.File, source.Line)
 }
 
 func (h *Handler) Postprocess(yamlstr []byte) string {

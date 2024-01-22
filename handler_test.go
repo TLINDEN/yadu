@@ -116,6 +116,14 @@ var tests = []Tests{
 		},
 	},
 	{
+		name:   "has-source",
+		want:   "handler_test.go",
+		negate: false,
+		opts: yadu.Options{
+			AddSource: true,
+		},
+	},
+	{
 		// check if output is NOT colored when disabling it
 		name:   "disable-color",
 		want:   "\x1b[0m",
