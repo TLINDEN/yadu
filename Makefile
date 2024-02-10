@@ -11,7 +11,7 @@ VERSION   = $(shell grep VERSION handler.go | head -1 | cut -d '"' -f2)
 all: buildlocal
 
 buildlocal:
-	go build
+	go build  -o example/example example/example.go
 
 clean:
 	rm -rf $(tool) coverage.out testdata t/out example/example

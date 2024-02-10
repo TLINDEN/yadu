@@ -212,7 +212,7 @@ func (h *Handler) appendAttr(wa map[string]interface{}, a slog.Attr) {
 		}
 		wa[name] = innerwa
 
-		if a.Key != "" {
+		if a.Key != "" && len(h.groups) > 0 {
 			h.groups = h.groups[:len(h.groups)-1]
 		}
 
