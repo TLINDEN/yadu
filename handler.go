@@ -17,7 +17,7 @@ import (
 	"github.com/fatih/color"
 )
 
-const VERSION = "0.1.1"
+const VERSION = "0.1.2"
 
 // We use RFC datestring by default
 const DefaultTimeFormat = "2006-01-02T03:04.05 MST"
