@@ -34,6 +34,10 @@ type Enemy struct {
 	Ammo   []Ammo
 }
 
+type Point struct {
+	y, Y, yes, n, N, no, True, False, on, off int
+}
+
 type Tests struct {
 	name    string
 	want    string
@@ -166,6 +170,9 @@ func GetAmmo() *Ammo {
 	return &Ammo{Forweapon: "Axe", Range: 50, Impact: 1, Cost: 50}
 }
 
+func GetPoint() *Point {
+	return &Point{}
+}
 func removeTime(_ []string, a slog.Attr) slog.Attr {
 	if a.Key == slog.TimeKey {
 		return slog.Attr{}
@@ -173,7 +180,7 @@ func removeTime(_ []string, a slog.Attr) slog.Attr {
 	return a
 }
 
-func Test(t *testing.T) {
+func TestLogger(t *testing.T) {
 	t.Parallel()
 
 	for _, tt := range tests {
@@ -209,5 +216,24 @@ func Test(t *testing.T) {
 		}
 
 		buf.Reset()
+	}
+}
+
+func TestYamlCleaner(t *testing.T) {
+	t.Parallel()
+
+	var buf bytes.Buffer
+	logger := slog.New(yadu.NewHandler(&buf, &yadu.Options{}))
+	slog.SetDefault(logger)
+
+	logger.Info("got a point", "point", GetPoint())
+
+	got := buf.String()
+
+	bools := []string{"y:", "n:", "true:", "false:"}
+	for _, want := range bools {
+		if !strings.Contains(got, want) {
+			t.Errorf("test TestYamlCleaner failed.\n want: %s:\n got: %s\n", want, got)
+		}
 	}
 }

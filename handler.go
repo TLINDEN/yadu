@@ -17,7 +17,7 @@ import (
 	"github.com/fatih/color"
 )
 
-const VERSION = "0.1.2"
+const VERSION = "0.1.3"
 
 // We use RFC datestring by default
 const DefaultTimeFormat = "2006-01-02T03:04.05 MST"
@@ -38,6 +38,35 @@ type Handler struct {
 	replaceAttr func(groups []string, a slog.Attr) slog.Attr
 	addSource   bool
 	indenter    *regexp.Regexp
+
+	/*
+		This is being used in Postprocess() to fix
+		https://github.com/go-yaml/yaml/issues/1020 and
+		https://github.com/TLINDEN/yadu/issues/12 respectively.
+
+		yaml.v3 follows the YAML standard and quotes all keys and values
+		matching this regex (see https://yaml.org/type/bool.html):
+		`y|Y|yes|Yes|YES|n|N|no|No|NO|true|True|TRUE|false|False|FALSE|on|On|ON|off|Off|OFF`
+
+		The problem is,  that the YAML "standard" does  not state wether
+		this  applies  to  values  or   keys  or  values&keys  and  most
+		implementors, as gopkg.in/yaml.v3, do it just for keys and values.
+
+		Therefore if  we dump a struct  containing a key "Y"  it ends up
+		being quoted, while any other  keys remain unquoted, which looks
+		pretty ugly, makes evaluating  the output harder,  especially in
+		game development where you have to dump coordinates, points etc,
+		all containing X,Y with X unquoted and Y quoted.
+
+		To fix  this utter nonsence,  I just  replace all quotes  in all
+		keys. Period. This is just a logging module, nobody will and can
+		use its output to postprocess  it with some yaml parser, because
+		we not only dump the structs as  yaml, we also write a one liner
+		in front of it with the  timestamp and the message. So, we don't
+		output  valid  YAML  anyway  and  we don't  give  a  shit  about
+		compliance because of this. AND because this rule is bullshit.
+	*/
+	yamlcleaner *regexp.Regexp
 }
 
 // Options are options for the Yadu [log/slog.Handler].
@@ -150,7 +179,9 @@ func (h *Handler) getSource(pc uintptr) string {
 }
 
 func (h *Handler) Postprocess(yamlstr []byte) string {
-	return "\n    " + strings.TrimSpace(h.indenter.ReplaceAllString(string(yamlstr), "    "))
+	tree := string(yamlstr)
+	clean := h.yamlcleaner.ReplaceAllString(tree, "$1$2:")
+	return "\n    " + strings.TrimSpace(h.indenter.ReplaceAllString(clean, "    "))
 }
 
 // NewHandler returns a [log/slog.Handler] using the receiver's options.
@@ -168,6 +199,7 @@ func NewHandler(out io.Writer, opts *Options) *Handler {
 		replaceAttr: opts.ReplaceAttr,
 		addSource:   opts.AddSource,
 		indenter:    regexp.MustCompile(`(?m)^`),
+		yamlcleaner: regexp.MustCompile("(?m)^( *)\"([^\"]*)\":"),
 	}
 
 	if opts.Level == nil {
@@ -269,5 +301,6 @@ func (h *Handler) clone() *Handler {
 		replaceAttr: h.replaceAttr,
 		addSource:   h.addSource,
 		indenter:    h.indenter,
+		yamlcleaner: h.yamlcleaner,
 	}
 }
