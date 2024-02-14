@@ -35,7 +35,7 @@ type Enemy struct {
 }
 
 type Point struct {
-	y, Y, yes, n, N, no, True, False, on, off int
+	Y, N, True, False int
 }
 
 type Tests struct {
@@ -185,8 +185,8 @@ func TestLogger(t *testing.T) {
 
 	for _, tt := range tests {
 		var buf bytes.Buffer
-
-		logger := slog.New(yadu.NewHandler(&buf, &tt.opts))
+		ttopts := tt.opts
+		logger := slog.New(yadu.NewHandler(&buf, &ttopts))
 
 		if !tt.with.Equal(slog.Attr{}) {
 			logger = logger.With(tt.with)
