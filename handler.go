@@ -42,7 +42,7 @@ type Handler struct {
 	/*
 		This is being used in Postprocess() to fix
 		https://github.com/go-yaml/yaml/issues/1020 and
-		https://github.com/TLINDEN/yadu/issues/12 respectively.
+		https://github.com/tlinden/yadu/issues/12 respectively.
 
 		yaml.v3 follows the YAML standard and quotes all keys and values
 		matching this regex (see https://yaml.org/type/bool.html):

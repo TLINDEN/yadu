@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/tlinden/yadu"
+	"github.com/tlinden/yadu/v2"
 )
 
 type body string

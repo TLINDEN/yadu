@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/fatih/color"
-	"github.com/tlinden/yadu"
+	"github.com/tlinden/yadu/v2"
 )
 
 type body string

@@ -1,7 +1,6 @@
-[![Go Report Card](https://goreportcard.com/badge/github.com/tlinden/yadu)](https://goreportcard.com/report/github.com/tlinden/yadu) 
-[![Actions](https://github.com/tlinden/yadu/actions/workflows/ci.yaml/badge.svg)](https://github.com/tlinden/yadu/actions)
-[![Go Coverage](https://github.com/tlinden/yadu/wiki/coverage.svg)](https://raw.githack.com/wiki/tlinden/yadu/coverage.html)
-![GitHub License](https://img.shields.io/github/license/tlinden/yadu)
+[![status-badge](https://ci.codeberg.org/api/badges/15686/status.svg)](https://ci.codeberg.org/repos/15686)
+[![Go Report Card](https://goreportcard.com/badge/github.com/tlinden/yadu)](https://goreportcard.com/report/github.com/tlinden/yadu)
+[![License](https://img.shields.io/badge/license-GPL-blue.svg)](https://codeberg.org/scip/yadu/raw/branch/main/LICENSE)
 [![GoDoc](https://godoc.org/github.com/tlinden/yadu?status.svg)](https://godoc.org/github.com/tlinden/yadu)
 
 # yadu - a human readable yaml based slog.Handler
@@ -74,7 +73,7 @@ See `example/example.go` for usage.
 
 Execute this to add the module to your project:
 ```sh
-go get github.com/tlinden/yadu
+go get github.com/tlinden/yadu/v2
 ```
 
 ## Configuration
