@@ -5,6 +5,9 @@
 
 # yadu - a human readable yaml based slog.Handler
 
+> [!CAUTION]
+> This software is now being maintained on [Codeberg](https://codeberg.org/scip/yadu/).
+
 ## Introduction
 
 Package yadu provides a handler for the log/slog logging framework.
